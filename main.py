@@ -4,18 +4,20 @@ from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandle
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 
-# የተጠቃሚዎችን መረጃ ለጊዜው ለመያዝ (Player ID እና የተመረጠው ዕቃ)
+# የተጠቃሚዎችን መረጃ ለጊዜው ለመያዝ
 user_data_store = {}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     welcome_text = (
         "Welcome to ETB TOP UP! 🎮💎\n\n"
         "Buy Free Fire Diamonds easily.\n"
-        "Choose your diamond package, enter your Player ID, and follow the payment instructions.\n\n"
-        "Support: Contact the admin for help."
+        "Choose your product, enter your Player ID, and follow the payment instructions.\n\n"
+        "Support: Contact the admin for help: @KNIGHT5277"
     )
     keyboard = [
-        [InlineKeyboardButton("🛒 Products", callback_data='products')],
+        [InlineKeyboardButton("💎 Diamond Top-up", callback_data='diamonds_menu')],
+        [InlineKeyboardButton("📦 Memberships", callback_data='membership_menu')],
+        [InlineKeyboardButton("⭐ Level Up Pass", callback_data='levelup_menu')],
         [InlineKeyboardButton("📞 Contact Support", callback_data='contact_support')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -30,68 +32,82 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     user_id = query.from_user.id
 
-    if query.data == 'products':
+    if query.data == 'diamonds_menu':
         keyboard = [
-            [InlineKeyboardButton("Free Fire Middle East", callback_data='ff_middle_east')],
+            [InlineKeyboardButton("110+10 Diamonds - 190 ETB", callback_data='buy_190')],
+            [InlineKeyboardButton("210+21 Diamonds - 400 ETB", callback_data='buy_400')],
+            [InlineKeyboardButton("530+53 Diamonds - 975 ETB", callback_data='buy_975')],
             [InlineKeyboardButton("◀️ Back", callback_data='back_home')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text("Select a game:", reply_markup=reply_markup)
+        await query.edit_message_text("Select Diamond Top-up Package:", reply_markup=reply_markup)
 
-    elif query.data == 'ff_middle_east':
+    elif query.data == 'membership_menu':
         keyboard = [
-            [InlineKeyboardButton("110+10 Diamonds - 185 ETB", callback_data='buy_185')],
-            [InlineKeyboardButton("210+21 Diamonds - 395 ETB", callback_data='buy_395')],
-            [InlineKeyboardButton("Weekly Membership - 480 ETB", callback_data='buy_480')],
-            [InlineKeyboardButton("Booyah Pass - 650 ETB", callback_data='buy_650')],
-            [InlineKeyboardButton("530+53 Diamonds - 970 ETB", callback_data='buy_970')],
-            [InlineKeyboardButton("Monthly Membership - 2150 ETB", callback_data='buy_2150')],
-            [InlineKeyboardButton("◀️ Back", callback_data='products')]
+            [InlineKeyboardButton("Weekly Membership - 485 ETB", callback_data='buy_485')],
+            [InlineKeyboardButton("Monthly Membership - 2155 ETB", callback_data='buy_2155')],
+            [InlineKeyboardButton("◀️ Back", callback_data='back_home')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text("Freefire Middle East", reply_markup=reply_markup)
+        await query.edit_message_text("Select Membership:", reply_markup=reply_markup)
+
+    elif query.data == 'levelup_menu':
+        keyboard = [
+            [InlineKeyboardButton("Level Up Pass - 255 ETB", callback_data='buy_255')],
+            [InlineKeyboardButton("◀️ Back", callback_data='back_home')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text("Select Level Up Pass:", reply_markup=reply_markup)
 
     elif query.data.startswith('buy_'):
         price = query.data.split('_')[1]
-        if price == '185':
+        if price == '190':
             item_name = "110+10 Diamonds"
-        elif price == '395':
+        elif price == '400':
             item_name = "210+21 Diamonds"
-        elif price == '480':
-            item_name = "Weekly Membership"
-        elif price == '650':
-            item_name = "Booyah Pass"
-        elif price == '970':
+        elif price == '975':
             item_name = "530+53 Diamonds"
-        else:
+        elif price == '485':
+            item_name = "Weekly Membership"
+        elif price == '2155':
             item_name = "Monthly Membership"
+        else:
+            item_name = "Level Up Pass"
             
         user_data_store[user_id] = {"item": item_name, "price": price}
         
-        keyboard = [[InlineKeyboardButton("◀️ Back", callback_data='ff_middle_east')]]
+        keyboard = [[InlineKeyboardButton("◀️ Back", callback_data='back_home')]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        await query.edit_message_text("⌨️ Enter Game Id:", reply_markup=reply_markup)
+        await query.edit_message_text("⌨️ Enter Game ID (Player ID):", reply_markup=reply_markup)
         context.user_data['waiting_for_id'] = True
 
-    elif query.data == 'pay_chapa':
+    elif query.data == 'confirm_order':
         data = user_data_store.get(user_id, {})
-        price = data.get("price", "185")
+        price = data.get("price", "190")
+        item = data.get("item", "Item")
+        player_id = data.get("player_id", "000000")
+        ign = data.get("ign", "ⓥ Ｍ Ａ ད Ａ Ｒ Ａ")
         
         chapa_link = "https://checkout.chapa.co/checkout/payment..."
         
         text = (
             "⚠️ Legal Warning / ህጋዊ ማሳሰቢያ ⚠️\n"
             "By paying, you confirm you are 18+ and agree to our Terms.\n\n"
-            f"Total: {price} ETB\n\n"
+            f"Items: {item} x 1\n"
+            f"Total: {price} ETB\n"
+            f"Player ID: {player_id}\n"
+            f"User: {ign}\n\n"
             f"ክፍያ ለመፈጸም ከታች ያለውን ሊንክ ይጫኑ፦\n{chapa_link}"
         )
-        keyboard = [[InlineKeyboardButton("◀️ Back", callback_data='ff_middle_east')]]
+        keyboard = [[InlineKeyboardButton("◀️ Back", callback_data='back_home')]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text, reply_markup=reply_markup)
 
     elif query.data == 'contact_support':
-        await query.edit_message_text("ለማንኛውም ጥያቄ አድሚኑን ያናግሩ፦ @KNIGHT5277")
+        keyboard = [[InlineKeyboardButton("◀️ Back", callback_data='back_home')]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text("ለማንኛውም ጥያቄ አድሚኑን ያናግሩ፦ @KNIGHT5277", reply_markup=reply_markup)
 
     elif query.data == 'back_home':
         await start(update, context)
@@ -102,21 +118,26 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         player_id = update.message.text
         context.user_data['waiting_for_id'] = False
         
+        mock_ign = "ⓥ Ｍ Ａ Ｄ Ａ Ｒ Ａ"
+        
         user_data = user_data_store.get(user_id, {})
+        user_data["player_id"] = player_id
+        user_data["ign"] = mock_ign
+        user_data_store[user_id] = user_data
+        
         item = user_data.get("item", "Diamonds")
-        price = user_data.get("price", "185")
+        price = user_data.get("price", "190")
         
         text = (
             f"Confirm checkout\n"
             f"Items: {item} x 1\n"
             f"Total: {price} ETB\n"
-            f"Player ID: {player_id}\n\n"
-            f"ክፍያ ለመፈጸም እና Player ID ለመላክ አድሚኑን ያናግሩ፦ @KNIGHT5277\n\n"
-            "Choose how to pay:"
+            f"Player ID: {player_id}\n"
+            f"User: {mock_ign}"
         )
         keyboard = [
-            [InlineKeyboardButton("Chapa", callback_data='pay_chapa')],
-            [InlineKeyboardButton("◀️ Back", callback_data='ff_middle_east')]
+            [InlineKeyboardButton("✅ Confirm", callback_data='confirm_order')],
+            [InlineKeyboardButton("◀️ Back", callback_data='back_home')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text(text, reply_markup=reply_markup)
@@ -129,4 +150,4 @@ if __name__ == '__main__':
     
     print("Bot is running...")
     app.run_polling()
-        
+                                  
