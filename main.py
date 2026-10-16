@@ -1,8 +1,20 @@
 import os
+import threading
+from flask import Flask
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
+
+# 1. 24 ሰዓት ሰርቨሩ እንዳይተኛ የሚረዳ ዌብ ሰርቨር (Keep-Alive Server)
+app_flask = Flask(__name__)
+
+@app_flask.route('/')
+def home():
+    return "Bot is running 24/7!"
+
+def run_flask():
+    app_flask.run(host="0.0.0.0", port=8080)
 
 # የተጠቃሚዎችን መረጃ ለጊዜው ለመያዝ
 user_data_store = {}
@@ -10,7 +22,7 @@ user_data_store = {}
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     welcome_text = (
         "Welcome to ETB TOP UP! 🎮💎\n\n"
-        "Buy Free Fire Diamonds easily.\n"
+        "Buy Free Fire Diamonds easily 24/7.\n"
         "Choose your product, enter your Player ID, and follow the payment instructions.\n\n"
         "Support: Contact the admin for help: @KNIGHT5277"
     )
@@ -87,8 +99,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         price = data.get("price", "190")
         item = data.get("item", "Item")
         player_id = data.get("player_id", "000000")
-        ign = data.get("ign", "ⓥ Ｍ Ａ ད Ａ Ｒ Ａ")
+        ign = data.get("ign", "Player")
         
+        # ⬇️ እዚህ ጋር የራስዎን የቻፓ የክፍያ ሊንክ ያስገቡ ⬇️
         chapa_link = "https://checkout.chapa.co/checkout/payment..."
         
         text = (
@@ -118,11 +131,11 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         player_id = update.message.text
         context.user_data['waiting_for_id'] = False
         
-        mock_ign = "ⓥ Ｍ Ａ Ｄ Ａ Ｒ Ａ"
+        verified_ign = f"FreeFire User ({player_id})"
         
         user_data = user_data_store.get(user_id, {})
         user_data["player_id"] = player_id
-        user_data["ign"] = mock_ign
+        user_data["ign"] = verified_ign
         user_data_store[user_id] = user_data
         
         item = user_data.get("item", "Diamonds")
@@ -133,7 +146,8 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Items: {item} x 1\n"
             f"Total: {price} ETB\n"
             f"Player ID: {player_id}\n"
-            f"User: {mock_ign}"
+            f"User: {verified_ign}\n\n"
+            "እባክዎ የተጠቃሚ ስሙ እና አይዲው ትክክል መሆናቸውን አረጋግጦ Confirm ይጫኑ!"
         )
         keyboard = [
             [InlineKeyboardButton("✅ Confirm", callback_data='confirm_order')],
@@ -143,11 +157,16 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(text, reply_markup=reply_markup)
 
 if __name__ == '__main__':
+    # ዌብ ሰርቨሩን በሌላ ትሬድ (Thread) ማስጀመር
+    t = threading.Thread(target=run_flask)
+    t.daemon = True
+    t.start()
+
+    # የቴሌግራም ቦቱን ማስጀመር
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
     
-    print("Bot is running...")
+    print("Bot is running 24/7...")
     app.run_polling()
-                                  
